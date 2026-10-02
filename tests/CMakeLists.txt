@@ -1,5 +1,6 @@
 add_executable(unit_tests
     unit/test_sanity.cpp
+    unit/test_cli.cpp
 )
 
 # link the onnxcc_lib library to the unit_tests executable.
@@ -19,3 +20,5 @@ target_compile_definitions(unit_tests
 include(GoogleTest)
 # run the exe in background and discover all the tests in the unit_tests executable and register them with CTest. 
 gtest_discover_tests(unit_tests)
+
+target_compile_options(unit_tests PRIVATE ${ONNXCC_WARNINGS})
