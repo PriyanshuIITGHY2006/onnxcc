@@ -1,6 +1,7 @@
 add_executable(unit_tests
     unit/test_sanity.cpp
     unit/test_cli.cpp
+    unit/test_parse.cpp
 )
 
 # link the onnxcc_lib library to the unit_tests executable.

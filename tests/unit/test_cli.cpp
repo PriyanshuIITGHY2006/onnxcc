@@ -10,7 +10,7 @@
 
 namespace {
 
-TEST(CliTopLevel, HelpGoesToStdout) {
+TEST(Cli, HelpGoesToStdout) {
     std::ostringstream out;
     std::ostringstream err;
     const char* argv[] = {"onnxcc", "--help"};
@@ -22,7 +22,7 @@ TEST(CliTopLevel, HelpGoesToStdout) {
     EXPECT_NE(std::string::npos, out.str().find("dump"));
 }
 
-TEST(CliTopLevel, NoArgumentsPrintsUsageToStderr) {
+TEST(Cli, UsageOnErrorGoesToStderr) {
     std::ostringstream out;
     std::ostringstream err;
     const char* argv[] = {"onnxcc"};
@@ -34,62 +34,7 @@ TEST(CliTopLevel, NoArgumentsPrintsUsageToStderr) {
     EXPECT_NE(std::string::npos, err.str().find("usage"));
 }
 
-TEST(CliTopLevel, UnknownSubcommandIsNamed) {
-    std::ostringstream out;
-    std::ostringstream err;
-    const char* argv[] = {"onnxcc", "bogus"};
-
-    const int code = onnxcc::cli::run(2, argv, out, err);
-
-    EXPECT_EQ(onnxcc::cli::kExitUsage, code);
-    EXPECT_TRUE(out.str().empty());
-
-    // The task asks for the bad subcommand to be named, not just "unknown command".
-    EXPECT_NE(std::string::npos, err.str().find("bogus"));
-}
-
-TEST(CliDump, HelpListsEveryOption) {
-    std::ostringstream out;
-    std::ostringstream err;
-    const char* argv[] = {"onnxcc", "dump", "--help"};
-
-    const int code = onnxcc::cli::run(3, argv, out, err);
-
-    EXPECT_EQ(onnxcc::cli::kExitOk, code);
-    EXPECT_TRUE(err.str().empty());
-
-    const std::string help = out.str();
-    EXPECT_NE(std::string::npos, help.find("--model"));
-    EXPECT_NE(std::string::npos, help.find("--show-graph"));
-    EXPECT_NE(std::string::npos, help.find("--verbose"));
-}
-
-TEST(CliDump, MissingModelIsAUsageError) {
-    std::ostringstream out;
-    std::ostringstream err;
-    const char* argv[] = {"onnxcc", "dump"};
-
-    const int code = onnxcc::cli::run(2, argv, out, err);
-
-    EXPECT_EQ(onnxcc::cli::kExitUsage, code);
-    EXPECT_TRUE(out.str().empty());
-    EXPECT_NE(std::string::npos, err.str().find("--model"));
-}
-
-TEST(CliDump, UnknownOptionIsAUsageError) {
-    std::ostringstream out;
-    std::ostringstream err;
-    const char* argv[] = {"onnxcc", "dump", "--nonsense"};
-
-    const int code = onnxcc::cli::run(3, argv, out, err);
-
-    EXPECT_EQ(onnxcc::cli::kExitUsage, code);
-    EXPECT_TRUE(out.str().empty());
-    EXPECT_NE(std::string::npos, err.str().find("nonsense"));
-}
-
-// A missing file is not a usage mistake, so it exits 1 and not 2.
-TEST(CliDump, MissingModelFileIsAFailureNotAUsageError) {
+TEST(Cli, MissingModelFileFailsWithoutBeingAUsageError) {
     std::ostringstream out;
     std::ostringstream err;
     const char* argv[] = {"onnxcc", "dump", "--model", "no_such_model_12345.onnx"};
@@ -101,8 +46,8 @@ TEST(CliDump, MissingModelFileIsAFailureNotAUsageError) {
     EXPECT_NE(std::string::npos, err.str().find("no_such_model_12345.onnx"));
 }
 
-
-TEST(CliDump, ExistingModelFileSucceeds) {
+// fixtures are generated, not committed, so this makes its own file
+TEST(Cli, ExistingModelFileSucceeds) {
     const std::filesystem::path model =
         std::filesystem::temp_directory_path() / "onnxcc_cli_test_model.onnx";
     std::ofstream(model) << "pretend onnx bytes";
@@ -110,18 +55,19 @@ TEST(CliDump, ExistingModelFileSucceeds) {
     std::ostringstream out;
     std::ostringstream err;
     const std::string path = model.string();
-    const char* argv[] = {"onnxcc", "dump", "--model", path.c_str()};
+    const char* argv[] = {"onnxcc", "dump", "--model", path.c_str(), "--verbose"};
 
-    const int code = onnxcc::cli::run(4, argv, out, err);
+    const int code = onnxcc::cli::run(5, argv, out, err);
 
     EXPECT_EQ(onnxcc::cli::kExitOk, code);
     EXPECT_TRUE(err.str().empty());
     EXPECT_NE(std::string::npos, out.str().find(path));
+    EXPECT_NE(std::string::npos, out.str().find("size:"));
 
     std::filesystem::remove(model);
 }
 
-TEST(CliDump, DirectoryIsRejected) {
+TEST(Cli, DirectoryIsRejected) {
     const std::string dir = std::filesystem::temp_directory_path().string();
 
     std::ostringstream out;
