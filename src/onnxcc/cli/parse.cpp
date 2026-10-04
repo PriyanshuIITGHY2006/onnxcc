@@ -7,7 +7,6 @@
 
 namespace onnxcc::cli {
     namespace {
-
         constexpr std::string_view kUsage =
             "usage: onnxcc <subcommand> [options]\n"
             "\n"
@@ -79,6 +78,10 @@ namespace onnxcc::cli {
         }
 
     }  // namespace
+    
+    // the anonymous namespace helps to avoid collision, as these names help, error are generic they maybe used in some other work
+    // under the namespace cli only...as these are not needed outside this cpp file, we don't need them to be accessible outside
+    // although parse is not in anonymous namespace so we can access the variables via parse, that only matters.
 
     ParseResult parse(int argc, const char* const argv[]) {
         if (argc < 2) {
