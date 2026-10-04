@@ -18,6 +18,8 @@ namespace onnxcc::cli {
             err << "onnxcc dump: error: model file '" << options.model << "' does not exist\n";
             return kExitFailure;
         }
+        // exists() is also true for dirs, devices and fifos (named pipes, where a read waits
+        // for whoever writes), so a fifo would hang the parser instead of failing
         if (!std::filesystem::is_regular_file(model, ec) || ec) {
             err << "onnxcc dump: error: '" << options.model << "' is not a regular file\n";
             return kExitFailure;
