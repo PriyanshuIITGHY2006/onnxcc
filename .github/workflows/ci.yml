@@ -18,14 +18,30 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { name: linux-x86 / g++, os: ubuntu-latest }
-          - { name: linux-arm / g++, os: ubuntu-24.04-arm }
+          - { name: linux-x86 / g++, os: ubuntu-latest, cc: gcc, cxx: g++ }
+          - { name: linux-x86 / clang, os: ubuntu-latest, cc: clang, cxx: clang++ }
+          - { name: linux-arm / g++, os: ubuntu-24.04-arm, cc: gcc, cxx: g++ }
+          - { name: macos-arm / clang, os: macos-latest, cc: clang, cxx: clang++ }
+
+    # keeps the fetched deps out of build/, so a reconfigure does not drop the cache
+    env:
+      FETCHCONTENT_BASE_DIR: ${{ github.workspace }}/.deps
 
     steps:
       - uses: actions/checkout@v4
 
+      - name: Cache deps
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.deps
+          key: deps-${{ runner.os }}-${{ runner.arch }}-${{ matrix.cxx }}-${{ hashFiles('CMakeLists.txt') }}
+
       - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+        run: >
+          cmake -S . -B build
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_C_COMPILER=${{ matrix.cc }}
+          -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
 
       - name: Build
         run: cmake --build build -j4
