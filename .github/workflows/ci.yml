@@ -4,16 +4,22 @@ on:
   push:
   pull_request:
 
-# a new push cancels the previous run on the same branch
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
-    name: linux-x86 / g++
-    runs-on: ubuntu-latest
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 60
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: linux-x86 / g++, os: ubuntu-latest }
+          - { name: linux-arm / g++, os: ubuntu-24.04-arm }
 
     steps:
       - uses: actions/checkout@v4
