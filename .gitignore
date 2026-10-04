@@ -10,6 +10,7 @@
 !/CMakeLists.txt
 !/tests/
 !/scripts/
+!/.github/
 
 # Ignore these files and directories
 .DS_Store
