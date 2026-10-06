@@ -1,0 +1,52 @@
+name: ci
+
+on:
+  push:
+    branches: ['main']
+    paths-ignore: ['**.md']
+  pull_request:
+    branches: ['main']
+    paths-ignore: ['**.md']
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: linux-x86 / g++, os: ubuntu-latest, cc: gcc, cxx: g++ }
+          - { name: linux-x86 / clang, os: ubuntu-latest, cc: clang, cxx: clang++ }
+          - { name: linux-arm / g++, os: ubuntu-24.04-arm, cc: gcc, cxx: g++ }
+          - { name: macos-arm / clang, os: macos-latest, cc: clang, cxx: clang++ }
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache deps
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.deps
+          key: deps-${{ runner.os }}-${{ runner.arch }}-${{ matrix.cxx }}-${{ hashFiles('CMakeLists.txt') }}
+
+      # deps live outside build/ so reconfiguring does not throw the cache away
+      - name: Configure
+        run: >
+          cmake -S . -B build
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_C_COMPILER=${{ matrix.cc }}
+          -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
+          -DFETCHCONTENT_BASE_DIR=${{ github.workspace }}/.deps
+
+      - name: Build
+        run: cmake --build build -j4
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
