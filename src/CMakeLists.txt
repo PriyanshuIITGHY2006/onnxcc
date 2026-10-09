@@ -6,6 +6,7 @@ add_library(onnxcc_lib STATIC
     onnxcc/cli/parse.cpp
     onnxcc/cli/dump_command.cpp
     onnxcc/memory/arena.cpp
+    onnxcc/memory/tensor_view.cpp
 )
 
 add_executable(onnxcc onnxcc/main.cpp)
